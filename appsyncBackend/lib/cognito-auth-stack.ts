@@ -1,5 +1,6 @@
 // stack to deply cognito user pool and identity pool
-import { Stack, StackProps, CfnOutput } from 'aws-cdk-lib';
+import { Stack, StackProps } from 'aws-cdk-lib';
+import * as cdk from 'aws-cdk-lib';
 import { Construct } from 'constructs';
 // import from cognito package
 import { UserPool, UserPoolClient } from 'aws-cdk-lib/aws-cognito';
@@ -40,13 +41,15 @@ export class CognitoAuthStack extends Stack {
 
     // output the user pool id and client id
     // these values will be used in appsyncBackend-stack.ts
-    new CfnOutput(this, 'UserPoolId', {
+    new cdk.CfnOutput(this, 'UserPoolId', {
       value: userPool.userPoolId,
+      exportName: 'UserPoolId',
     });
-    new CfnOutput(this, 'UserPoolClientId', {
+    new cdk.CfnOutput(this, 'UserPoolClientId', {
       value: userPoolClient.userPoolClientId,
+      exportName: 'UserPoolClientId',
     });
-
+    
 
   }
 }

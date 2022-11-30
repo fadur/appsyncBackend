@@ -6,11 +6,9 @@ type Todo {
 }
 
 type Query {
-  todos: [Todo]
+  getTodos: [Todo]
 }
 
 type Mutation {
-  addTodo(title: String!, priority: Int!): Todo
-  toggleTodo(id: ID!): Todo
-  deleteTodo(id: ID!): Todo
+  createTodo(title: String!, completed: Boolean!, priority: Int!): Todo
 }

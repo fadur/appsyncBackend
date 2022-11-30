@@ -7,7 +7,7 @@ import {aws_iam as iam } from 'aws-cdk-lib';
 import * as cdk from 'aws-cdk-lib';
 import { aws_logs as logs } from 'aws-cdk-lib';
 // import dynamodb package
-// import {aws_dynamodb as dynamodb } from 'aws-cdk-lib';
+import {aws_dynamodb as dynamodb } from 'aws-cdk-lib';
 // import fs and path
 import * as fs from 'fs';
 import * as path from 'path';
@@ -18,10 +18,10 @@ export class AppsyncBackendStack extends Stack {
     super(scope, id, props);
     
     const schema_dir = path.join(__dirname, '../../schema');
-    const resolvers_dir = path.join(__dirname, '../../resolvers');
+    // const resolvers_dir = path.join(__dirname, '../../resolvers');
 
     // import userpoolid from cognito stack
-    const userPoolId = cdk.Fn.importValue('appsyncBackendCognitoStackUserPoolId');
+    const userPoolId = cdk.Fn.importValue('UserPoolId');
 
     // create cloudwatch log group
     const logGroup = new logs.LogGroup(this, 'AppsyncLogGroup', {
@@ -49,7 +49,7 @@ export class AppsyncBackendStack extends Stack {
     logGroupPolicy.attachToRole(logGroupRole);
 
 
-    new appsync.CfnGraphQLApi(this, 'GraphQLApi', {
+    const GraphQLApi = new appsync.CfnGraphQLApi(this, 'GraphQLApi', {
       name: 'AppsyncBackend',
       authenticationType: 'AMAZON_COGNITO_USER_POOLS',
       userPoolConfig: {
@@ -65,41 +65,45 @@ export class AppsyncBackendStack extends Stack {
 
     // create schema
     const schema = fs.readFileSync(schema_dir + '/schema.graphql', 'utf8');
-    new appsync.CfnGraphQLSchema(this, 'GraphQLSchema', {
-      apiId: cdk.Fn.ref('GraphQLApi'),
+    const graphqlSchema = new appsync.CfnGraphQLSchema(this, 'GraphQLSchema', {
+      apiId: GraphQLApi.attrApiId,
       definition: schema,
     });
+    graphqlSchema.addDependsOn(GraphQLApi);
 
-    // create resolvers
-    // create resolver for Query
-    new appsync.CfnResolver(this, 'QueryResolver', {
-      apiId: cdk.Fn.ref('GraphQLApi'),
-      typeName: 'Query',
-      fieldName: 'getTodos',
-      dataSourceName: 'TodoTable',
-      requestMappingTemplate: fs.readFileSync(resolvers_dir + '/Query.getTodos.req.js', 'utf8'),
-      responseMappingTemplate: fs.readFileSync(resolvers_dir + '/Query.getTodos.res.js', 'utf8'),
+    const TodoTable = new dynamodb.Table(this, 'TodoTable', {
+      partitionKey: {
+        name: 'pk',
+        type: dynamodb.AttributeType.STRING,
+      },
+      tableName: 'TodoTable',
+      removalPolicy: cdk.RemovalPolicy.DESTROY,  
     });
 
-    // create resolver for Mutation
-    new appsync.CfnResolver(this, 'MutationResolver', {
-      apiId: cdk.Fn.ref('GraphQLApi'),
-      typeName: 'Mutation',
-      fieldName: 'createTodo',
-      dataSourceName: 'TodoTable',
-      // js resolvers in resolvers dir
-      requestMappingTemplate: fs.readFileSync(resolvers_dir + '/Mutation.createTodo.req.js', 'utf8'),
-      responseMappingTemplate: fs.readFileSync(resolvers_dir + '/Mutation.createTodo.res.js', 'utf8'),
+    // create role for dynamodb
+    const dynamoDbRole = new iam.Role(this, 'DynamoDbRole', {
+      assumedBy: new iam.ServicePrincipal('appsync.amazonaws.com'),
     });
 
+    // create policy for dynamodb
+    const dynamoDbPolicy = new iam.Policy(this, 'DynamoDbPolicy', {
+      statements: [
+        new iam.PolicyStatement({
+          effect: iam.Effect.ALLOW,
+          actions: ['dynamodb:BatchGetItem', 'dynamodb:BatchWriteItem', 'dynamodb:PutItem', 'dynamodb:Query', 'dynamodb:GetItem', 'dynamodb:Scan', 'dynamodb:UpdateItem', 'dynamodb:DeleteItem'],
+          resources: [TodoTable.tableArn],
+        }),
+      ],
+    });
+    dynamoDbPolicy.attachToRole(dynamoDbRole);
 
     // create data source
-    new appsync.CfnDataSource(this, 'TodoTable', {
-      apiId: cdk.Fn.ref('GraphQLApi'),
-      name: 'TodoTable',
+    const dataSource = new appsync.CfnDataSource(this, 'TodoTableDataSource', {
+      apiId: GraphQLApi.attrApiId,
+      name: 'TodoTableDataSource',
       type: 'AMAZON_DYNAMODB',
       dynamoDbConfig: {
-        tableName: 'TodoTable',
+        tableName: TodoTable.tableName,
         awsRegion: 'eu-central-1',
       },
       serviceRoleArn: new iam.Role(this, 'AppsyncDynamoDBRole', {
@@ -109,7 +113,38 @@ export class AppsyncBackendStack extends Stack {
         ],
       }).roleArn,
     });
-    // create dynamodb table policy
-    // attach policy to role
+    dataSource.addDependsOn(GraphQLApi);
+
+    // export graphql apiId, name and url
+    new cdk.CfnOutput(this, 'GraphQLApiId', {
+      value: GraphQLApi.attrApiId,
+      exportName: 'GraphQLApiId',
+      description: 'GraphQL API ID',
+    });
+
+    new cdk.CfnOutput(this, 'GraphQLApiName', {
+      value: GraphQLApi.name,
+      exportName: 'GraphQLApiName',
+      description: 'GraphQL API Name',
+    });
+
+    new cdk.CfnOutput(this, 'GraphQLApiUrl', {
+      value: GraphQLApi.attrGraphQlUrl,
+      exportName: 'GraphQLApiUrl',
+      description: 'GraphQL API URL',
+    });
+
+    new cdk.CfnOutput(this, 'GraphQLApiArn', {
+      value: GraphQLApi.attrArn,
+      exportName: 'GraphQLApiArn',
+      description: 'GraphQL API Arn',
+    });
+
+    new cdk.CfnOutput(this, 'dataSourceName', {
+      value: dataSource.name,
+      exportName: 'dataSourceName',
+      description: 'Data Source Name',
+    });
+
   }
 }
