@@ -5,8 +5,14 @@ type Todo {
   priority: Int!
 }
 
+type TodoConnection {
+  items: [Todo!]
+  nextToken: String
+}
+
+
 type Query {
-  getTodos: [Todo]
+  getTodos: TodoConnection
 }
 
 type Mutation {
