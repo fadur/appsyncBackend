@@ -27,17 +27,31 @@ export class CognitoAuthStack extends Stack {
           mutable: true,
         },
       },
+      // password policy
+      passwordPolicy: {
+        minLength: 8,
+        requireDigits: true,
+        requireLowercase: true,
+        requireSymbols: false,
+        requireUppercase: true,
+      },
     });
     const userPoolClient = new UserPoolClient(this, 'UserPoolClient', {
       userPool,
       userPoolClientName: 'AppsyncBackendUserPoolClient',
       generateSecret: false,
+      authFlows: {
+        userPassword: true,
+        userSrp: true,
+        adminUserPassword: true,
+      },
     });
     userPool.addDomain('UserPoolDomain', {
       cognitoDomain: {
         domainPrefix: 'appsyncbackend',
       }
     });
+
 
     // output the user pool id and client id
     // these values will be used in appsyncBackend-stack.ts
@@ -49,6 +63,8 @@ export class CognitoAuthStack extends Stack {
       value: userPoolClient.userPoolClientId,
       exportName: 'UserPoolClientId',
     });
+
+
     
 
   }

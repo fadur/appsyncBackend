@@ -2,5 +2,5 @@
   "version": "2017-02-28",
   "operation": "Scan",
   "limit": 10,
-  "nextToken": "aPaginationToken"
+  "nextToken": $util.toJson($util.defaultIfNullOrBlank($ctx.args.nextToken, null))
 }
