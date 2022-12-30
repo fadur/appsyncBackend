@@ -43,10 +43,15 @@ func Register(password string, email string, username string) (*string, error) {
 func ConfirmUser(code string, username string) error {
 
 	sess := session.Must(session.NewSession(&aws.Config{
-		Region: aws.String("eu-central-1"),
+		Region: aws.String("eu-west-1"),
 	}))
 
 	svc := cognitoidentityprovider.New(sess)
+
+	fmt.Println("Confirming user")
+	fmt.Println(code)
+	fmt.Println(username)
+	fmt.Println(utils.GetEnv("COGNITO_CLIENT_ID", ""))
 
 	input := &cognitoidentityprovider.ConfirmSignUpInput{
 		ConfirmationCode: aws.String(code),

@@ -12,7 +12,7 @@ import (
 func Login(username string, password string) (string, error) {
 
 	sess := session.Must(session.NewSession(&aws.Config{
-		Region: aws.String("eu-central-1"),
+		Region: aws.String(utils.GetEnv("AWS_DEFAULT_REGION", "eu-west-1")),
 	}))
 
 	cognitoClient := cognitoidentityprovider.New(sess)

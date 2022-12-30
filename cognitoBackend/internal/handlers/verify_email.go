@@ -38,6 +38,7 @@ func VerifyEmail(w http.ResponseWriter, r *http.Request) {
 			Success: false,
 			Message: fmt.Sprintf("Error verifying email: %s", err.Error()),
 		})
+		return
 	}
 
 	// Return the response

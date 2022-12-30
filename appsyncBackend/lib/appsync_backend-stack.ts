@@ -39,7 +39,9 @@ export class AppsyncBackendStack extends Stack {
       statements: [
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
-          actions: ['logs:CreateLogStream', 'logs:PutLogEvents'],
+          actions: [
+            'logs:*',
+          ],
           resources: [logGroup.logGroupArn],
         }),
       ],
@@ -54,7 +56,7 @@ export class AppsyncBackendStack extends Stack {
       authenticationType: 'AMAZON_COGNITO_USER_POOLS',
       userPoolConfig: {
         userPoolId,
-        awsRegion: 'eu-central-1',
+        awsRegion: 'eu-west-1',
         defaultAction: 'ALLOW',
       },
       logConfig: {
@@ -90,7 +92,16 @@ export class AppsyncBackendStack extends Stack {
       statements: [
         new iam.PolicyStatement({
           effect: iam.Effect.ALLOW,
-          actions: ['dynamodb:BatchGetItem', 'dynamodb:BatchWriteItem', 'dynamodb:PutItem', 'dynamodb:Query', 'dynamodb:GetItem', 'dynamodb:Scan', 'dynamodb:UpdateItem', 'dynamodb:DeleteItem'],
+          actions: [
+            'dynamodb:BatchGetItem', 
+            'dynamodb:BatchWriteItem', 
+            'dynamodb:PutItem', 
+            'dynamodb:Query',
+            'dynamodb:GetItem', 
+            'dynamodb:Scan', 
+            'dynamodb:UpdateItem', 
+            'dynamodb:DeleteItem'
+          ],
           resources: [TodoTable.tableArn],
         }),
       ],
@@ -104,7 +115,7 @@ export class AppsyncBackendStack extends Stack {
       type: 'AMAZON_DYNAMODB',
       dynamoDbConfig: {
         tableName: TodoTable.tableName,
-        awsRegion: 'eu-central-1',
+        awsRegion: 'eu-west-1',
       },
       serviceRoleArn: new iam.Role(this, 'AppsyncDynamoDBRole', {
         assumedBy: new iam.ServicePrincipal('appsync.amazonaws.com'),

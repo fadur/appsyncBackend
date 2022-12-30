@@ -1,8 +1,12 @@
 build:
-	cd cognitoBackend && docker build -t cognitobackend . && \
-		aws ecr get-login-password --region $$AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $$ACCOUNT.dkr.ecr.$$AWS_DEFAULT_REGION.amazonaws.com && \
+	cd cognitoBackend && docker build -t cognitobackend . 
+
+login:
+		aws ecr get-login-password --region $$AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $$ACCOUNT.dkr.ecr.$$AWS_DEFAULT_REGION.amazonaws.com
+
+push:
 		docker tag cognitobackend:latest $$ACCOUNT.dkr.ecr.$$AWS_DEFAULT_REGION.amazonaws.com/cognitobackend:latest && \
-		docker push $$ACCOUNT.dkr.ecr.$$AWS_DEFAULT_REGION.amazonaws.com/cognitobackend:latest && 
+		docker push $$ACCOUNT.dkr.ecr.$$AWS_DEFAULT_REGION.amazonaws.com/cognitobackend:latest 
 
 
 deploy:
